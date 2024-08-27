@@ -1,0 +1,15 @@
+einops
+matplotlib
+numpy
+pandas
+patool
+scikit-learn
+scipy
+sktime
+sympy
+torch
+tqdm
+timm==0.3.2
+datasets
+gluonts
+pillow
