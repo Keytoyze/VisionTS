@@ -10,8 +10,8 @@ _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
 
 
 <p align="center">
-    📃&nbsp;<a href="">Paper</a>
-    | 🔍&nbsp;<a href="#-about">About</a>
+    📃&nbsp;<a href="https://arxiv.org/pdf/2408.17253" target=“_blank”>Paper</a> 
+    | 🔍&nbsp;<a href="#-about">About</a>
     | 🔨&nbsp;<a href="#-setup">Setup</a>
     | 🚀&nbsp;<a href="#-quick-start">Quick Start</a>
     | 📊&nbsp;<a href="#-evaluation">Evaluation</a>
@@ -22,9 +22,9 @@ _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
 ## 🔍 About
 
 
-- **TL;DR**: We propose **VisionTS**, a new road to building *zero-shot* foundation model for time series forecasting (TSF) based on *natural images*. 
+- **TL;DR**: We propose **VisionTS**, a new road to building *zero-shot* foundation model for time series forecasting (TSF) based on *natural images* 🖼️. 
 
-  - This road is conceptually different from the existing roads to building TSF foundation models (*Text-based* and *Time series-based* methods), but it shows a comparable or even better performance.
+  - This road is conceptually different from the existing roads (*text-based* 📝 and *time series-based* 📈 foundation models), but it shows a comparable or even better performance **without any adaptation on time series data**.
 
 <img src="figure/ltsf_performance_overview.png" style="zoom:50%;" />
 
@@ -43,7 +43,7 @@ Our repository is built on [Time-Series-Library](https://github.com/thuml/Time-S
 ## 🚀 Quick Start
 
 
-Please refer to [demo.ipynb](demo.ipynb) for a quick start on how to forecast time series using **VisionTS**, with a clear visualization of the reconstructed images. Our main code is under [visionts](visionts) directory.
+Please refer to [demo.ipynb](demo.ipynb) for a quick start on how to forecast time series using **VisionTS**, with a clear visualization of the image reconstruction. Our main code is under [visionts](visionts) directory.
 
 
 ## 📊 Evaluation
@@ -90,7 +90,14 @@ bash scripts/vision_ts_fullshot/$SOME_DATASET.sh
 
 ## 🔗 Citation
 
-TODO
-
-(Currently, our paper is unfortunately *on hold* in arXiv).
+```bibtex
+@misc{chen2024visionts,
+      title={VisionTS: Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters}, 
+      author={Mouxiang Chen and Lefei Shen and Zhuo Li and Xiaoyun Joy Wang and Jianling Sun and Chenghao Liu},
+      year={2024},
+      eprint={2408.17253},
+      archivePrefix={arXiv},
+      url={https://arxiv.org/abs/2408.17253}, 
+}
+```
 
