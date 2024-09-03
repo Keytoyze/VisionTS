@@ -23,7 +23,7 @@ _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
 
 - We propose **VisionTS**, a time series forecasting (TSF) foundation model building from rich, high-quality *natural images* 🖼️. 
 
-  - This TSF foundation model is conceptually different from the existing models (*text-based* 📝 or *time series-based* 📈), but it shows a comparable or even better performance **without any adaptation on time series data**.
+  - This is conceptually different from the existing TSF foundation models (*text-based* 📝 or *time series-based* 📈), but it shows a comparable or even better performance **without any adaptation on time series data**.
 
 <div align="center">
 <img src="figure/ltsf_performance_overview.png" style="width:70%;" />
