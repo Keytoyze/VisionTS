@@ -107,9 +107,11 @@ bash scripts/vision_ts_fullshot/$SOME_DATASET.sh
 
 ## ⭐ Star History
 
+    
 <div align="center">
-<img src="figure/ltsf_performance.png" style="width: 70%;" />
+    <a href="https://star-history.com/#Keytoyze/VisionTS&Timeline">
+        <img src="https://api.star-history.com/svg?repos=Keytoyze/VisionTS&type=Timeline" style="width: 70%;" />
+    </a>
 </div>
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Keytoyze/VisionTS&type=Timeline)](https://star-history.com/#Keytoyze/VisionTS&Timeline)
 
