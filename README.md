@@ -8,15 +8,14 @@ _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
 
 </div>
 
-
 <p align="center">
     📃&nbsp;<a href="https://arxiv.org/pdf/2408.17253" target=“_blank”>Paper</a> 
     | 🔍&nbsp;<a href="#-about">About</a>
-    | 🔨&nbsp;<a href="#-setup">Setup</a>
     | 🚀&nbsp;<a href="#-quick-start">Quick Start</a>
     | 📊&nbsp;<a href="#-evaluation">Evaluation</a>
     | 🔗&nbsp;<a href="#-citation">Citation</a>
 </p>
+
 
 
 ## 🔍 About
@@ -36,20 +35,20 @@ _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
 <img src="figure/method.png" style="width: 70%;" />
 </div>
 
-## 🔨 Setup
-
-
-Our repository is built on [Time-Series-Library](https://github.com/thuml/Time-Series-Library), [MAE](https://github.com/facebookresearch/mae), and [GluonTS](https://github.com/awslabs/gluonts). Please install the dependencies through `requirements.txt`.
-
-
 ## 🚀 Quick Start
 
+We have uploaded our package to PyPI. Please first install [pytorch](https://pytorch.org/get-started/locally/), then running the following command for installing **VisionTS**:
 
-Please refer to [demo.ipynb](demo.ipynb) for a quick start on how to forecast time series using **VisionTS**, with a clear visualization of the image reconstruction. Our main code is under the [visionts](visionts) directory, which can be imported to your project for use.
+```bash
+pip install visionts
+```
+
+Then, you can refer to [demo.ipynb](demo.ipynb) about forecasting time series using **VisionTS**, with a clear visualization of the image reconstruction. 
 
 
 ## 📊 Evaluation
 
+Our repository is built on [Time-Series-Library](https://github.com/thuml/Time-Series-Library), [MAE](https://github.com/facebookresearch/mae), and [GluonTS](https://github.com/awslabs/gluonts). Please install the dependencies through `requirements.txt` before running evaluation.
 
 #### Long-Term TSF Benchmarks (Zero-Shot)
 

@@ -2,3 +2,7 @@ __pycache__
 save/
 ckpt/
 dataset/
+build/
+dist/
+*.egg-info
+dist.sh
