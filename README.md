@@ -9,7 +9,7 @@ _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
 </div>
 
 <p align="center">
-    📃&nbsp;<a href="https://arxiv.org/pdf/2408.17253" target=“_blank”>Paper</a> 
+    📃&nbsp;<a href="https://arxiv.org/pdf/2408.17253" target="_blank">Paper</a> 
     | 🔍&nbsp;<a href="#-about">About</a>
     | 🚀&nbsp;<a href="#-quick-start">Quick Start</a>
     | 📊&nbsp;<a href="#-evaluation">Evaluation</a>
@@ -48,7 +48,7 @@ Then, you can refer to [demo.ipynb](demo.ipynb) about forecasting time series us
 
 ## 📊 Evaluation
 
-Our repository is built on [Time-Series-Library](https://github.com/thuml/Time-Series-Library), [MAE](https://github.com/facebookresearch/mae), and [GluonTS](https://github.com/awslabs/gluonts). Please install the dependencies through `requirements.txt` before running evaluation.
+Our repository is built on [Time-Series-Library](https://github.com/thuml/Time-Series-Library), [MAE](https://github.com/facebookresearch/mae), and [GluonTS](https://github.com/awslabs/gluonts). Please install the dependencies through `requirements.txt` before running the evaluation.
 
 #### Long-Term TSF Benchmarks (Zero-Shot)
 
@@ -72,7 +72,7 @@ bash scripts/vision_ts_zeroshot/$SOME_DATASET.sh
 </div>
 
 
-We evaluate our methods on 29 Monash TSF benchmarks. Using the following command for reproduction, where the benchmarks will be automatically downloaded.
+We evaluate our methods on 29 Monash TSF benchmarks. You can use the following command for reproduction, where the benchmarks will be automatically downloaded.
 
 
 ```bash
@@ -104,4 +104,12 @@ bash scripts/vision_ts_fullshot/$SOME_DATASET.sh
       url={https://arxiv.org/abs/2408.17253}, 
 }
 ```
+
+## ⭐ Star History
+
+<div align="center">
+<img src="figure/ltsf_performance.png" style="width: 70%;" />
+</div>
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Keytoyze/VisionTS&type=Timeline)](https://star-history.com/#Keytoyze/VisionTS&Timeline)
 
