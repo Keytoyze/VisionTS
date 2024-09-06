@@ -7,10 +7,10 @@ scikit-learn
 scipy
 sktime
 sympy
-torch==1.7.1
-torchvision==0.8.2
+torch
+torchvision
 tqdm
-timm==0.3.2
+timm
 datasets
 gluonts
 pillow
