@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='visionts',
-    version='0.1.3',
+    version='0.1.4',
     author='Mouxiang Chen',
     author_email='chenmx@zju.edu.cn',
     description='Using a vision MAE for time series forecasting.',

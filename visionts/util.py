@@ -1,6 +1,8 @@
 import requests
 from tqdm import tqdm
 import os
+import inspect
+from torchvision.transforms import Resize
 
 def download_file(url, local_filename):
     response = requests.get(url, stream=True)
@@ -20,3 +22,12 @@ def download_file(url, local_filename):
                 if chunk:
                     file.write(chunk)
                     bar.update(len(chunk))
+
+
+def safe_resize(size, interpolation):
+    signature = inspect.signature(Resize)
+    params = signature.parameters
+    if 'antialias' in params:
+        return Resize(size, interpolation, antialias=False)
+    else:
+        return Resize(size, interpolation)
