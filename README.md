@@ -6,11 +6,13 @@
 
 _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
 
+[![Paper](https://img.shields.io/badge/paper-2408.17253-red)](https://arxiv.org/abs/2408.17253)
+[![PyPI - Version](https://img.shields.io/pypi/v/visionts)](#-quick-start)
+
 </div>
 
 <p align="center">
-    📃&nbsp;<a href="https://arxiv.org/pdf/2408.17253" target="_blank">Paper</a> 
-    | 🔍&nbsp;<a href="#-about">About</a>
+    🔍&nbsp;<a href="#-about">About</a>
     | 🚀&nbsp;<a href="#-quick-start">Quick Start</a>
     | 📊&nbsp;<a href="#-evaluation">Evaluation</a>
     | 🔗&nbsp;<a href="#-citation">Citation</a>

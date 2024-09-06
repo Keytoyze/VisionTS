@@ -83,9 +83,9 @@ class VisionTS(nn.Module):
             "bicubic": Image.BICUBIC,
         }[interpolation]
 
-        self.input_resize = Resize((self.image_size, int(self.image_size * adjust_input_ratio)), interpolation=interpolation)
+        self.input_resize = Resize((self.image_size, int(self.image_size * adjust_input_ratio)), interpolation=interpolation, antialias=False)
         self.scale_x = ((self.pad_left + self.context_len) // self.periodicity) / (int(self.image_size * adjust_input_ratio))
-        self.output_resize = Resize((self.periodicity, int(round(self.image_size * self.scale_x))), interpolation=interpolation)
+        self.output_resize = Resize((self.periodicity, int(round(self.image_size * self.scale_x))), interpolation=interpolation, antialias=False)
         self.norm_const = norm_const
         
         mask = torch.ones((self.num_patch, self.num_patch)).to(self.vision_model.cls_token.device)
