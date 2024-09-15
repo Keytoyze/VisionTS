@@ -82,6 +82,9 @@ cd monash/
 python run.py
 ```
 
+> [!IMPORTANT]
+> The results in the paper are evaluated based on `torch==1.7.1`, `torchvision==0.8.2`, and `timm==0.3.2`. Different framework versions may lead to slightly different performance.
+
 #### Long-Term TSF Benchmarks (Full-Shot)
 
 
@@ -109,7 +112,7 @@ bash scripts/vision_ts_fullshot/$SOME_DATASET.sh
 
 ## ⭐ Star History
 
-    
+
 <div align="center">
     <a href="https://star-history.com/#Keytoyze/VisionTS&Timeline">
         <img src="https://api.star-history.com/svg?repos=Keytoyze/VisionTS&type=Timeline" style="width: 70%;" />
