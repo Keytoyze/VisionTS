@@ -18,10 +18,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional
 from zipfile import ZipFile
+import os
 
 import gluonts
 from gluonts.dataset import DatasetWriter
-from gluonts.dataset.common import MetaData, TrainDatasets
+from gluonts.dataset.common import MetaData, TrainDatasets, CategoricalFeatureInfo
 from gluonts.dataset.field_names import FieldName
 from gluonts.dataset.repository._tsf_datasets import Dataset as MonashDataset
 from gluonts.dataset.repository._tsf_datasets import TSFReader, convert_data
@@ -30,8 +31,11 @@ from gluonts.dataset.repository._util import metadata
 from gluonts.dataset.split import split
 from gluonts.dataset.repository.datasets import get_dataset
 from gluonts.dataset.repository.datasets import get_dataset
+import numpy as np
+import pandas as pd
 from pandas.tseries.frequencies import to_offset
 
+LSF_PATH = "../long_term_tsf/dataset"
 
 def default_prediction_length_from_frequency(freq: str) -> int:
     prediction_length_map = {
@@ -259,80 +263,137 @@ gluonts.dataset.repository.datasets.dataset_recipes.update({
     for k in additional_datasets.keys()
 })
 
-PRETRAIN_GROUP = [
-    "taxi_30min",
-    "uber_tlc_daily",
-    "uber_tlc_hourly",
-    "wiki-rolling_nips",
-    "london_smart_meters_with_missing",
-    "wind_farms_with_missing",
-    "wind_power",
-    "solar_power",
-    "oikolab_weather",
-    "elecdemand",
-    "covid_mobility",
-    "kaggle_web_traffic_weekly",
-    "extended_web_traffic_with_missing",
-    "m5",
-    "m4_yearly",
-    "m1_yearly",
-    "m1_quarterly",
-    "monash_m3_yearly",
-    "monash_m3_quarterly",
-    "tourism_yearly",
-]
 
-TRAIN_TEST_GROUP = {
-    "m4_hourly": None,
-    "m4_daily": None,
-    "m4_weekly": None,
-    "m4_monthly": None,
-    "m4_quarterly": None,
-    "m1_monthly": None,
-    "monash_m3_monthly": None,
-    "monash_m3_other": None,
-    "nn5_daily_with_missing": None,
-    "nn5_weekly": 8,
-    "tourism_monthly": None,
-    "tourism_quarterly": None,
-    "cif_2016_6": None,
-    "cif_2016_12": None,
-    "traffic_hourly": 168,
-    "traffic_weekly": 8,
-    "australian_electricity_demand": 336,
-    "rideshare_with_missing": 168,
-    "saugeenday": 30,
-    "sunspot_with_missing": 30,
-    "temperature_rain_with_missing": 30,
-    "vehicle_trips_with_missing": 30,
-    "weather": 30,
-    "car_parts_with_missing": 12,
-    "fred_md": 12,
-    "pedestrian_counts": 24,
-    "hospital": 12,
-    "covid_deaths": 30,
-    "kdd_cup_2018_with_missing": 168,
-    "bitcoin_with_missing": 30,
-    "us_births": 30,
+def _load_walmart(dataset_name: str, prediction_length: Optional[int] = None):
+    df = pd.read_csv(
+        os.path.join(
+            LSF_PATH, "walmart-recruiting-store-sales-forecasting/train.csv"
+        )
+    )
+
+    data = []
+    for id, row in df[["Store", "Dept"]].drop_duplicates().iterrows():
+        row_df = df.query(f"Store == {row.Store} and Dept == {row.Dept}")
+        if len(row_df) != 143:
+            continue
+        data.append(row_df.Weekly_Sales.to_numpy())
+    data = np.stack(data, 1)
+
+    start = pd.to_datetime("2010-02-05")
+    freq = "W"
+    prediction_length = prediction_length or 8
+    rolling_evaluations = 4
+    return data, start, freq, prediction_length, rolling_evaluations
+
+
+def _load_jena_weather(dataset_name: str, prediction_length: Optional[int] = None):
+    df = pd.read_csv(os.path.join(LSF_PATH, "weather/weather.csv"))
+    cols = list(df.columns)
+    cols.remove("OT")
+    cols.remove("date")
+    df = df[["date"] + cols + ["OT"]]
+    data = df[df.columns[1:]].to_numpy()
+
+    start = pd.to_datetime(df[["date"]].iloc[0].item())
+    freq = "10T"
+    prediction_length = prediction_length or 6 * 24
+    rolling_evaluations = 7
+    return data, start, freq, prediction_length, rolling_evaluations
+
+
+def _load_istanbul_traffic(dataset_name: str, prediction_length: Optional[int] = None):
+    df = pd.read_csv(
+        os.path.join(LSF_PATH, "istanbul-traffic-index/istanbul_traffic.csv")
+    )
+    df.datetime = pd.to_datetime(df.datetime)
+    df = df.set_index("datetime")
+    df = df.resample("h").mean()
+
+    data = df.values
+    start = df.index[0]
+    freq = "h"
+    prediction_length = prediction_length or 24
+    rolling_evaluations = 7
+    return data, start, freq, prediction_length, rolling_evaluations
+
+
+def _load_turkey_power(dataset_name: str, prediction_length: Optional[int] = None):
+    df = pd.read_csv(
+        os.path.join(
+            LSF_PATH,
+            "electrical-power-demand-in-turkey/power Generation and consumption.csv",
+        )
+    )
+    df.Date_Time = pd.to_datetime(df.Date_Time, format="%d.%m.%Y %H:%M")
+    df = df.set_index("Date_Time")
+
+    data = df.values
+    start = df.index[0]
+    freq = "h"
+    prediction_length = prediction_length or 24
+    rolling_evaluations = 7
+    return data, start, freq, prediction_length, rolling_evaluations
+
+
+pf_load_func_map = {
+    "walmart": _load_walmart,
+    "jena_weather": _load_jena_weather,
+    "istanbul_traffic": _load_istanbul_traffic,
+    "turkey_power": _load_turkey_power,
 }
 
 
-MULTI_SAMPLE_DATASETS = [
-    "oikolab_weather",
-    "kaggle_web_traffic_weekly",
-    "extended_web_traffic_with_missing",
-    "m5",
-    "nn5_daily_with_missing",
-    "nn5_weekly",
-    "traffic_hourly",
-    "traffic_weekly",
-    "rideshare_with_missing",
-    "temperature_rain_with_missing",
-    "car_parts_with_missing",
-    "fred_md",
-    "hospital",
-    "covid_deaths",
-]
+def generate_pf_dataset(
+    dataset_path: Path,
+    dataset_name: str,
+    dataset_writer: DatasetWriter,
+    prediction_length: Optional[int] = None,
+):
+    load_func = pf_load_func_map[dataset_name]
+    data, start, freq, prediction_length, rolling_evaluations = load_func(
+        dataset_name, prediction_length
+    )
+
+    train_ts = []
+    for cat in range(data.shape[-1]):
+        sliced_ts = data[: -prediction_length * rolling_evaluations, cat]
+        train_ts.append(
+            {
+                "target": sliced_ts,
+                "start": start,
+                "feat_static_cat": [cat],
+                "item_id": cat,
+            }
+        )
+
+    test_ts = []
+    for window in range(rolling_evaluations - 1, -1, -1):
+        for cat in range(data.shape[-1]):
+            sliced_ts = data[: len(data) - prediction_length * window, cat]
+            test_ts.append(
+                {
+                    "target": sliced_ts,
+                    "start": start,
+                    "feat_static_cat": [cat],
+                    "item_id": cat,
+                }
+            )
+
+    meta = MetaData(
+        freq=freq,
+        feat_static_cat=[
+            CategoricalFeatureInfo(name="feat_static_cat_0", cardinality=data.shape[-1])
+        ],
+        prediction_length=prediction_length,
+    )
+    dataset = TrainDatasets(metadata=meta, train=train_ts, test=test_ts)
+    dataset.save(path_str=str(dataset_path), writer=dataset_writer, overwrite=True)
+
+
+gluonts.dataset.repository.dataset_recipes.update({
+    k: partial(generate_pf_dataset, dataset_name=k) for k in pf_load_func_map.keys()
+})
+
 
 def get_gluonts_test_dataset(
     dataset_name: str,
@@ -360,3 +421,5 @@ def get_gluonts_test_dataset(
         split="test",
     )
     return test_data, metadata
+
+

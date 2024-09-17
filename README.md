@@ -78,12 +78,27 @@ We evaluate our methods on 29 Monash TSF benchmarks. You can use the following c
 
 
 ```bash
-cd monash/
-python run.py
+cd eval_gluonts/
+bash run_monash.sh
 ```
 
 > [!IMPORTANT]
-> The results in the paper are evaluated based on `torch==1.7.1`, `torchvision==0.8.2`, and `timm==0.3.2`. Different framework versions may lead to slightly different performance.
+> The results in the paper are evaluated based on `python==3.8.18`, `torch==1.7.1`, `torchvision==0.8.2`, and `timm==0.3.2`. Different versions may lead to slightly different performance.
+
+#### PF (Zero-Shot)
+
+We evaluate our methods on 6 long-term TSF benchmarks for zero-shot forecasting. Before running, you should first follow the instructions of [Time-Series-Library](https://github.com/thuml/Time-Series-Library) to download datasets into `long_term_tsf/dataset`, in addition to the following three datasets:
+
+- Walmart: https://www.kaggle.com/competitions/walmart-recruiting-store-sales-forecasting/overview (download to `long_term_tsf/dataset/walmart-recruiting-store-sales-forecasting/train.csv`)
+- Istanbul Traffic: https://www.kaggle.com/datasets/leonardo00/istanbul-traffic-index (download to `long_term_tsf/dataset/istanbul-traffic-index/istanbul_traffic.csv`)
+- Turkey Power: https://www.kaggle.com/datasets/dharanikra/electrical-power-demand-in-turkey  (download to `long_term_tsf/dataset/electrical-power-demand-in-turkey/power Generation and consumption.csv`)
+
+You can use the following command for reproduction.
+
+```bash
+cd eval_gluonts/
+bash run_pf.sh
+```
 
 #### Long-Term TSF Benchmarks (Full-Shot)
 
