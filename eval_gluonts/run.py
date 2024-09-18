@@ -14,7 +14,7 @@ from gluonts.ev.metrics import MAE, MASE, MSE, ND, NRMSE, SMAPE
 from gluonts.model.evaluation import evaluate_forecasts
 
 from dataset import get_gluonts_test_dataset
-from visionts import VisionTS
+from visionts import VisionTS, freq_to_seasonality_list
 
 POSSIBLE_SEASONALITIES = {
     "S": [3600],  # 1 hour
@@ -26,36 +26,6 @@ POSSIBLE_SEASONALITIES = {
     "B": [5],
     "Q": [4, 2], # 6 months or 1 year
 }
-
-
-def norm_freq_str(freq_str: str) -> str:
-    base_freq = freq_str.split("-")[0]
-    if len(base_freq) >= 2 and base_freq.endswith("S"):
-        return base_freq[:-1]
-    return base_freq
-
-
-def get_seasonality_list(freq: str) -> int:
-    offset = pd.tseries.frequencies.to_offset(freq)
-    base_seasonality_list = POSSIBLE_SEASONALITIES.get(norm_freq_str(offset.name), 1)
-    seasonality_list = []
-    for base_seasonality in base_seasonality_list:
-        seasonality, remainder = divmod(base_seasonality, offset.n)
-        if not remainder:
-            seasonality_list.append(seasonality)
-    seasonality_list.append(1)
-    return seasonality_list
-
-
-def compute_mae_with_nan(y_true, y_pred):
-    mae = []
-    for i in range(len(y_true)):
-        diff = np.abs(y_pred[i, :] - y_true[i, :])
-        if np.isnan(diff).all():
-            continue
-        diff = diff[~np.isnan(diff)].mean().item()
-        mae.append(diff)
-    return np.asarray(mae)
 
 
 def imputation_nan(array):
@@ -107,8 +77,7 @@ def forecast(model: VisionTS, train_list: list, test_list: list, batch_size, dev
                 batch_end = len(cur_train)
 
             cur_batch_train = cur_train[batch_start:batch_end]
-            with torch.no_grad():
-                cur_batch_pred = model(cur_batch_train, fp64=True) # [b t 1]
+            cur_batch_pred = model(cur_batch_train, fp64=True) # [b t 1]
             for i in range(len(cur_batch_pred)):
                 cur_idx = cur_idx_list[batch_start + i]
                 assert cur_idx not in forecast_np
@@ -143,7 +112,7 @@ def evaluate(
     pred_len = len(data_test[0])
     
     if periodicity == "autotune":
-        seasonality_list = get_seasonality_list(metadata.freq)
+        seasonality_list = freq_to_seasonality_list(metadata.freq, POSSIBLE_SEASONALITIES)
         best_valid_mae = float('inf')
         best_valid_p = 1
         for periodicity in tqdm(seasonality_list, desc='validate seasonality'):
@@ -161,7 +130,7 @@ def evaluate(
                 tqdm.write(f"autotune: P = {periodicity} | valid mae = {val_mae}, reject!")
         periodicity = best_valid_p
     elif periodicity == "freq":
-        periodicity = get_seasonality_list(metadata.freq)[0]
+        periodicity = freq_to_seasonality_list(metadata.freq, POSSIBLE_SEASONALITIES)[0]
     else:
         periodicity = int(periodicity)
 
