@@ -18,11 +18,10 @@ _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
     | 🔗&nbsp;<a href="#-citation">Citation</a>
 </p>
 
-**NEWS**
 
-🎉 Our paper is accepted by ICML 2025!
+- 🔥 Our paper is accepted by ICML 2025!
 
-🔥 VisionTS achieved the **#1** rank 🏆 for zero-shot point forecasting (MASE) on [GIFT-EVAL](https://huggingface.co/spaces/Salesforce/GIFT-Eval) (as of Nov 2024, surpassing Moirai, TimesFM, chronos, etc) — **without any time series training**!
+- 🔥 VisionTS achieved the **#1** rank 🏆 for zero-shot point forecasting (MASE) on [GIFT-EVAL](https://huggingface.co/spaces/Salesforce/GIFT-Eval) (as of Nov 2024, surpassing Moirai, TimesFM, chronos, etc) — **without any time series training**!
 
 ## 🔍 About
 
