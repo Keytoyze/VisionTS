@@ -185,7 +185,7 @@ class VisionTSpp(nn.Module):
             
             if not os.path.isfile(ckpt_path):
                 # local directory to save the model
-                local_dir = Path(ckpt_dir).parent
+                local_dir = Path(ckpt_path).parent
 
                 # Download model from HuggingFace
                 snapshot_download(
