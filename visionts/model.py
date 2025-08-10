@@ -181,7 +181,7 @@ class VisionTSpp(nn.Module):
 
         if load_ckpt:
             if ckpt_path is None:
-                ckpt_path = os.path.join(ckpt_dir, MAE_ARCH[arch][1])
+                ckpt_path = os.path.join(ckpt_dir, "visiontspp_model.ckpt")
             
             if not os.path.isfile(ckpt_path):
                 # local directory to save the model
