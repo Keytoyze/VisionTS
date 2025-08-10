@@ -9,6 +9,10 @@ from torch import nn
 from PIL import Image
 from . import util
 
+from huggingface_hub import snapshot_download
+import os
+from pathlib import Path
+
 MAE_ARCH = {
     "mae_base": [models_mae.mae_vit_base_patch16, "mae_visualize_vit_base.pth"],
     "mae_large": [models_mae.mae_vit_large_patch16, "mae_visualize_vit_large.pth"],
@@ -100,10 +104,10 @@ class VisionTS(nn.Module):
         # return: forecasting window, size: [bs x pred_len x nvars]
 
         # 1. Normalization
-        means = x.mean(1, keepdim=True).detach() # [bs x 1 x nvars]
+        means = x.mean(1, keepdim=True).detach()  # [bs x 1 x nvars]
         x_enc = x - means
         stdev = torch.sqrt(
-            torch.var(x_enc.to(torch.float64) if fp64 else x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5) # [bs x 1 x nvars]
+            torch.var(x_enc.to(torch.float64) if fp64 else x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5)  # [bs x 1 x nvars]
         stdev /= self.norm_const
         x_enc /= stdev
         # Channel Independent
@@ -158,18 +162,18 @@ class VisionTS(nn.Module):
         return y
 
 
+# huggingface repository name:
+VISIONTSPP_REPO_ID = "Lefei/VisionTSpp"
 
 class VisionTSpp(nn.Module):
-
-    def __init__(self, arch='mae_base', finetune_type='ln', ckpt_dir='./ckpt/', ckpt_path=None, load_ckpt=True, logvar=False, 
+    def __init__(self, arch='mae_base', finetune_type='ln', ckpt_dir='./ckpt/', ckpt_path=None, load_ckpt=True,
                  quantile=True, clip_input=0, complete_no_clip=False, color=True, quantile_head_num=9):
         super(VisionTS, self).__init__()
 
         if arch not in MAE_ARCH:
             raise ValueError(f"Unknown arch: {arch}. Should be in {list(MAE_ARCH.keys())}")
 
-        self.vision_model = MAE_ARCH[arch][0](logvar=logvar, quantile=quantile, quantile_head_num=quantile_head_num)
-        self.logvar = logvar
+        self.vision_model = MAE_ARCH[arch][0](quantile=quantile, quantile_head_num=quantile_head_num)
         self.quantile = quantile
         self.clip_input = clip_input
         self.complete_no_clip = complete_no_clip
@@ -178,18 +182,22 @@ class VisionTSpp(nn.Module):
         if load_ckpt:
             if ckpt_path is None:
                 ckpt_path = os.path.join(ckpt_dir, MAE_ARCH[arch][1])
+            
             if not os.path.isfile(ckpt_path):
-                remote_url = MAE_DOWNLOAD_URL + MAE_ARCH[arch][1]
-                util.download_file(remote_url, ckpt_path)
+                # local directory to save the model
+                local_dir = Path(ckpt_dir).parent
+
+                # Download model from HuggingFace
+                snapshot_download(
+                    repo_id=VISIONTSPP_REPO_ID,
+                    local_dir=local_dir,
+                    local_dir_use_symlinks=False
+                )
+            
             try:
                 print(f"Load {ckpt_path}")
                 checkpoint = torch.load(ckpt_path, map_location='cpu')
-                # 1. logvar
-                if not logvar:
-                    for k in list(checkpoint['model'].keys()):
-                        if "decoder_logvar" in k:
-                            del checkpoint['model'][k]
-                # 2. quantile
+                # quantile model:
                 if not quantile:
                     for k in list(checkpoint['model'].keys()):
                         if "decoder_pred_1" in k:
@@ -288,9 +296,7 @@ class VisionTSpp(nn.Module):
 
         # get nvars from input here
         self.nvars = x.shape[-1]
-        print(f"{self.nvars = }")
         
-        # self.input_resize = util.safe_resize((self.image_size, int(self.image_size * self.adjust_input_ratio)), interpolation=self.interpolation)
         # in case of input cannot be evenly divided by nvars, pad with zeros
         self.image_size_per_var = int(self.image_size / self.nvars)  # 224 // nvars
         self.input_resize = util.safe_resize((self.image_size_per_var, int(self.image_size * self.adjust_input_ratio)), interpolation=self.interpolation)
@@ -317,9 +323,7 @@ class VisionTSpp(nn.Module):
         # 2. Segmentation
         x_pad = F.pad(x_enc, (self.pad_left + extra_padding, 0), mode=self.padding_mode) # [b n s]
         
-        # x_2d = einops.rearrange(x_pad, 'b n (p f) -> (b n) 1 f p', f=self.periodicity)
         # f is periodicity, p is the number of periods
-        # x_2d = rearrange(x_pad, 'b n (p f) -> b 1 (n f) p', f=periodicity)
         x_2d = einops.rearrange(x_pad, 'b n (p f) -> b n f p', f=self.periodicity)  # x_2d.shape: [bs, nvars, f, p]
 
         # 3. Render & Alignment
@@ -329,14 +333,12 @@ class VisionTSpp(nn.Module):
         pad_down = self.image_size - x_resize.shape[2]  # 224 - nvars*224//nvars
         
         if pad_down > 0:
-            # x_resize = F.pad(x_resize, (0, 0, 0, pad_down), mode='constant')
             x_resize = torch.concat([
                     x_resize, 
                     torch.zeros((x_resize.shape[0], x_resize.shape[1], pad_down, x_resize.shape[3]), 
                         device=x_resize.device, dtype=x_resize.dtype)
                 ], 
                 dim=2)  # [bs, 1, 224, 112]
-        
         # assert x_resize.shape[2] == self.image_size, f"image size mismatch: {x_resize.shape[2]} vs {self.image_size}"
         
         
@@ -355,7 +357,7 @@ class VisionTSpp(nn.Module):
             image_input = torch.zeros((x_concat_with_masked.shape[0], 3, x_concat_with_masked.shape[2], x_concat_with_masked.shape[3]), 
                                     device=x_concat_with_masked.device, 
                                     dtype=x_concat_with_masked.dtype)  # [bs, 3, 224, 224]
-            # color_list = []
+            
             if color_list is None:
                 color_list = [i % 3 for i in range(self.nvars)]
             
@@ -364,28 +366,19 @@ class VisionTSpp(nn.Module):
                 image_input[:, color, i*self.image_size_per_var:(i+1)*self.image_size_per_var, :] = \
                     x_concat_with_masked[:, 0, i*self.image_size_per_var:(i+1)*self.image_size_per_var, :]
         
-
-        # print(f"{image_input.shape = }")
-        # print(f"{image_input = }")
-        if self.clip_input == 0:
-            if self.complete_no_clip:
-                print(f"image_input > 5: {torch.any((image_input > 5))}, image_input < -5: {torch.any((image_input < -5))}")
-                # pass
-            else:
-                print(f"image_input > 5: {torch.any((image_input > 5))}, image_input < -5: {torch.any((image_input < -5))}")
+        
+        if self.clip_input == 0:  # if not self.clip_input:
+            if not self.complete_no_clip:
                 image_input = torch.clip(image_input, -5, 5)
-        else:  # self.clip_input == 1 or self.clip_input == 2
+        else:
             # mean and std of ImageNet dataset
             image_mean = [0.485,0.456,0.406]
             image_std = [0.229,0.224,0.225]
-            # Calculate threshold for each channel, [-mean/std, (1-mean)/std]
-            # The result is as follows:
+            # Calculate threshold for each channel, [-mean/std, (1-mean)/std]. The result is as follows:
             thres_down_list = [-2.1179039301310043, -2.0357142857142856, -1.8044444444444445]
             thres_up_list = [2.2489082969432315, 2.428571428571429, 2.6399999999999997]
-            thres_down = -1.8044
-            thres_up = 2.2489
-            
-            print(f"image_input > {thres_up}: {torch.any((image_input > thres_up))}, image_input < {thres_down}: {torch.any((image_input < thres_down))}")
+            thres_down = max(thres_down_list)
+            thres_up = min(thres_up_list)
             
             image_input = torch.clip(image_input, thres_down, thres_up)
             
@@ -396,9 +389,6 @@ class VisionTSpp(nn.Module):
             mask_ratio=self.mask_ratio, noise=einops.repeat(self.mask, '1 l -> n l', n=image_input.shape[0])
         )
         
-        if self.logvar:
-            y, y_logvar = y
-            image_reconstructed_logvar = self.vision_model.unpatchify(y_logvar, n_channels=1) # [(bs x nvars) x 1 x h x w]
         if self.quantile:
             # including two parts
             y, y_quantile_list = y
@@ -407,11 +397,9 @@ class VisionTSpp(nn.Module):
             for y_quantile in y_quantile_list:
                 image_reconstructed_quantile = self.vision_model.unpatchify(y_quantile)  # [(bs x nvars) x 1 x h x w]
                 image_reconstructed_quantile_list.append(image_reconstructed_quantile)
-            
         
         # main data
         image_reconstructed = self.vision_model.unpatchify(y) # [(bs x nvars) x 3 x h x w]
-        # print(f"{image_reconstructed.shape = }")
 
 
         # extract each color channel from image_reconstructed
@@ -431,7 +419,7 @@ class VisionTSpp(nn.Module):
             
             nvar = nvars
             for i in range(batch_size):
-                # calculate height of each block
+                # calculate height of each variable block
                 h_per_var = height // nvar
                 remainder = height % nvar
                 
@@ -463,8 +451,6 @@ class VisionTSpp(nn.Module):
             y_grey = process_images(image_reconstructed, self.nvars, color_list)  # [B, 1, H, W]
 
         
-        if self.logvar:
-            y_before_resize = torch.cat([y_before_resize, image_reconstructed_logvar], dim=1) # [B, 2, H, W]
         if self.quantile:
             y_grey_quantile_list = []
             for image_reconstructed_quantile in image_reconstructed_quantile_list:
@@ -495,22 +481,18 @@ class VisionTSpp(nn.Module):
             return y_pred  # final shape is [bs, pred_len, nvars]
 
         # get the transformed time series
-        y_pred = extract_TS_from_image(y_grey)  # [bs, pred_len, nvars]
+        # the following predictions are all [bs, pred_len, nvars]
+        y_pred = extract_TS_from_image(y_grey)
         if self.quantile:
-            # the following are all [bs, pred_len, nvars]
             y_pred_quantile_list = []
             for y_grey_quantile in y_grey_quantile_list:
-                y_pred_quantile = extract_TS_from_image(y_grey_quantile)  # [bs, pred_len, nvars]
+                y_pred_quantile = extract_TS_from_image(y_grey_quantile)
                 y_pred_quantile_list.append(y_pred_quantile)
         
-        
-        if self.logvar:
-            y, y_logvar = y[:, 0], y[:, 1] # [B, L, C]
-            y_std = torch.exp(y_logvar / 2)
+
         if self.quantile:
-            y = y_pred  # [bs, pred_len, nvars]
-            y_quantile_list = y_pred_quantile_list  # Each element's shape is [bs, pred_len, nvars]
-            
+            y = y_pred
+            y_quantile_list = y_pred_quantile_list
         else:
             y = y[:, 0]
 
@@ -518,10 +500,6 @@ class VisionTSpp(nn.Module):
         y = y * (stdev.repeat(1, self.pred_len, 1))
         y = y + (means.repeat(1, self.pred_len, 1))
 
-        if self.logvar:
-            y_std = y_std * (stdev.repeat(1, self.pred_len, 1))
-            y_std = y_std + (means.repeat(1, self.pred_len, 1))
-            y = [y, y_std]
         if self.quantile:
             y_quantile_list = [
                 y_quantile * (stdev.repeat(1, self.pred_len, 1)) + means.repeat(1, self.pred_len, 1)
@@ -531,11 +509,8 @@ class VisionTSpp(nn.Module):
             
 
         if export_image:
-            # 250609 adds:
             period_num = LOOKBACK_LEN_VISUAL // self.periodicity
-            print(f"new period_num: {period_num}")
             x_2d_visual = x_2d[:, :, :, -period_num:]  # x_2d.shape: [bs, nvars, f, p]
-            print(f"{x_2d.shape = }, {x_2d_visual.shape = }")
             
             x_resize = self.input_resize(x_2d_visual)  # x_resize.shape: [b, nvars, 224//nvars, p->112]
             x_resize = einops.rearrange(x_resize, 'b n h w -> b 1 (n h) w')  # x_resize.shape: [bs, 1, nvars*224//nvars, 112]
@@ -543,14 +518,12 @@ class VisionTSpp(nn.Module):
             pad_down = self.image_size - x_resize.shape[2]  # 224 - nvars*224//nvars
             
             if pad_down > 0:
-                # x_resize = F.pad(x_resize, (0, 0, 0, pad_down), mode='constant')
                 x_resize = torch.concat([
                         x_resize, 
                         torch.zeros((x_resize.shape[0], x_resize.shape[1], pad_down, x_resize.shape[3]), 
                             device=x_resize.device, dtype=x_resize.dtype)
                     ], 
                     dim=2)  # [bs, 1, 224, 112]
-            
             # assert x_resize.shape[2] == self.image_size, f"image size mismatch: {x_resize.shape[2]} vs {self.image_size}"
             
             # masked: [bs, 1, 224, 112]，right-half mask
@@ -567,7 +540,7 @@ class VisionTSpp(nn.Module):
                 image_input = torch.zeros((x_concat_with_masked.shape[0], 3, x_concat_with_masked.shape[2], x_concat_with_masked.shape[3]), 
                                         device=x_concat_with_masked.device, 
                                         dtype=x_concat_with_masked.dtype)  # [bs, 3, 224, 224]
-                # color_list = []
+                
                 if color_list is None:
                     color_list = [i % 3 for i in range(self.nvars)]
                 
@@ -576,26 +549,18 @@ class VisionTSpp(nn.Module):
                     image_input[:, color, i*self.image_size_per_var:(i+1)*self.image_size_per_var, :] = \
                         x_concat_with_masked[:, 0, i*self.image_size_per_var:(i+1)*self.image_size_per_var, :]
             
-            print(f"{image_input.shape = }")
-            # print(f"{image_input = }")
-            if self.clip_input == 0:
-                if self.complete_no_clip:
-                    print(f"image_input > 5: {torch.any((image_input > 5))}, image_input < -5: {torch.any((image_input < -5))}")
-                    # pass
-                else:
-                    print(f"image_input > 5: {torch.any((image_input > 5))}, image_input < -5: {torch.any((image_input < -5))}")
+            if self.clip_input == 0:  # if not self.clip_input:
+                if not self.complete_no_clip:
                     image_input = torch.clip(image_input, -5, 5)
-            else:  # self.clip_input == 1 or self.clip_input == 2
-                # mean and std of ImageNet
+            else:
+                # mean and std of ImageNet dataset
                 image_mean = [0.485,0.456,0.406]
                 image_std = [0.229,0.224,0.225]
-                # Calculate threshold for each channel, [-mean/std, (1-mean)/std] as follows:
+                # Calculate threshold for each channel, [-mean/std, (1-mean)/std]. The result is as follows:
                 thres_down_list = [-2.1179039301310043, -2.0357142857142856, -1.8044444444444445]
                 thres_up_list = [2.2489082969432315, 2.428571428571429, 2.6399999999999997]
-                thres_down = -1.8044
-                thres_up = 2.2489
-                
-                print(f"image_input > {thres_up}: {torch.any((image_input > thres_up))}, image_input < {thres_down}: {torch.any((image_input < thres_down))}")
+                thres_down = max(thres_down_list)
+                thres_up = min(thres_up_list)
                 
                 image_input = torch.clip(image_input, thres_down, thres_up)
             

@@ -27,14 +27,11 @@ class MaskedAutoencoderViT(nn.Module):
                  embed_dim=1024, depth=24, num_heads=16,
                  decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
                  mlp_ratio=4., norm_layer=nn.LayerNorm, norm_pix_loss=False, 
-                 logvar=False, nonlinear_dist=False, 
                  quantile=False, quantile_head_num=9):
         super().__init__()
 
         # add for quantile forecasting
         self.norm_pix_loss = norm_pix_loss
-        self.logvar = logvar
-        self.nonlinear_dist = nonlinear_dist
         self.quantile = quantile
         self.quantile_head_num = quantile_head_num
 
@@ -79,18 +76,7 @@ class MaskedAutoencoderViT(nn.Module):
         # --------------------------------------------------------------------------
 
         self.initialize_weights()
-
-        if logvar:
-            if nonlinear_dist:
-                self.decoder_logvar = nn.Sequential(
-                    nn.Linear(decoder_embed_dim, decoder_embed_dim),
-                    nn.SiLU(),
-                    nn.Linear(decoder_embed_dim, patch_size**2)
-                )
-                torch.nn.init.zeros_(self.decoder_logvar[-1].weight)
-            else:
-                self.decoder_logvar = nn.Linear(decoder_embed_dim, patch_size**2)
-                torch.nn.init.zeros_(self.decoder_logvar.weight)
+    
 
     def initialize_weights(self):
         # initialization
@@ -222,16 +208,10 @@ class MaskedAutoencoderViT(nn.Module):
         x = self.decoder_norm(x)
 
         # predictor projection
-        if not self.quantile and not self.logvar:
+        if not self.quantile:
             x = self.decoder_pred(x)
             x = x[:, 1:, :]  # remove cls token
             return x
-        
-        elif self.logvar:
-            x_mean = self.decoder_pred(x)[:, 1:, :]
-            x_logvar = self.decoder_logvar(x)[:, 1:, :]
-            return x_mean, x_logvar
-        
         else:
             # first calculate the 50% quantile value
             x_mid = self.decoder_pred(x)[:, 1:, :]  # [batch, ]
@@ -279,14 +259,6 @@ def mae_vit_base_patch16_dec512d8b(**kwargs):
         mlp_ratio=4, norm_layer=partial(norm, eps=1e-6), **kwargs)
     return model
 
-
-def mae_test(**kwargs):
-    norm = nn.LayerNorm
-    model = MaskedAutoencoderViT(
-        patch_size=8, img_size=224, embed_dim=768, depth=12, num_heads=12,
-        decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
-        mlp_ratio=4, norm_layer=partial(norm, eps=1e-6), **kwargs)
-    return model
 
 def mae_vit_large_patch16_dec512d8b(**kwargs):
     model = MaskedAutoencoderViT(
