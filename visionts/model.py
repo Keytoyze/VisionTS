@@ -602,7 +602,7 @@ class VisionTSpp(nn.Module):
             
             mask = mask.detach()
             mask = mask.unsqueeze(-1).repeat(1, 1, self.vision_model.patch_embed.patch_size[0]**2 *3)  # (N, H*W, p*p*3)
-            mask = self.vision_model.unpatchify(mask)  # 1 is removing, 0 is keeping
+            mask = self.vision_model.unpatchify(mask)  # 1 means removing, 0 means keeping
             # mask = torch.einsum('nchw->nhwc', mask)
             image_reconstructed = image_input * (1 - mask) + image_reconstructed * mask
             green_bg = -torch.ones_like(image_reconstructed) * 2
