@@ -13,6 +13,7 @@ from functools import partial
 
 import torch
 import torch.nn as nn
+import numpy as np
 
 from timm.models.vision_transformer import PatchEmbed, Block
 
@@ -25,8 +26,14 @@ class MaskedAutoencoderViT(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_chans=3,
                  embed_dim=1024, depth=24, num_heads=16,
                  decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
-                 mlp_ratio=4., norm_layer=nn.LayerNorm, norm_pix_loss=False):
+                 mlp_ratio=4., norm_layer=nn.LayerNorm, norm_pix_loss=False, 
+                 quantile=False, quantile_head_num=9):
         super().__init__()
+
+        # add for quantile forecasting
+        self.norm_pix_loss = norm_pix_loss
+        self.quantile = quantile
+        self.quantile_head_num = quantile_head_num
 
         # --------------------------------------------------------------------------
         # MAE encoder specifics
@@ -55,12 +62,21 @@ class MaskedAutoencoderViT(nn.Module):
             for i in range(decoder_depth)])
 
         self.decoder_norm = norm_layer(decoder_embed_dim)
-        self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size**2 * in_chans, bias=True) # decoder to patch
+
+        # prediction head
+        self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size**2 * in_chans, bias=True)  # decoder to patch
+        if self.quantile:
+            # adds quantile outputs:
+            # we need 9 outputs in total, corresponding to 10%, 20%, ..., 90%
+            # So other 8 heads are needed to generate other quantile outputs.
+            self.decoder_pred_quantile_list = nn.ModuleList()
+            for i in range(self.quantile_head_num-1):
+                self.decoder_pred_quantile_list.append(nn.Linear(decoder_embed_dim, patch_size**2 * in_chans, bias=True))  # decoder to patch
+        
         # --------------------------------------------------------------------------
 
-        self.norm_pix_loss = norm_pix_loss
-
         self.initialize_weights()
+    
 
     def initialize_weights(self):
         # initialization
@@ -95,7 +111,7 @@ class MaskedAutoencoderViT(nn.Module):
     def patchify(self, imgs):
         """
         imgs: (N, 3, H, W)
-        x: (N, L, patch_size**2 *3)
+        x: (N, L, patch_size**2 * 3)
         """
         p = self.patch_embed.patch_size[0]
         assert imgs.shape[2] == imgs.shape[3] and imgs.shape[2] % p == 0
@@ -106,18 +122,20 @@ class MaskedAutoencoderViT(nn.Module):
         x = x.reshape(shape=(imgs.shape[0], h * w, p**2 * 3))
         return x
 
-    def unpatchify(self, x):
+    def unpatchify(self, x, n_channels=3):
         """
-        x: (N, L, patch_size**2 *3)
+        x: (N, L, patch_size**2 * n_channels)
         imgs: (N, 3, H, W)
         """
         p = self.patch_embed.patch_size[0]
         h = w = int(x.shape[1]**.5)
         assert h * w == x.shape[1]
         
-        x = x.reshape(shape=(x.shape[0], h, w, p, p, 3))
+        # x = x.reshape(shape=(x.shape[0], h, w, p, p, 3))
+        x = x.reshape(shape=(x.shape[0], h, w, p, p, n_channels))
         x = torch.einsum('nhwpqc->nchpwq', x)
-        imgs = x.reshape(shape=(x.shape[0], 3, h * p, h * p))
+        # imgs = x.reshape(shape=(x.shape[0], 3, h * p, h * p))
+        imgs = x.reshape(shape=(x.shape[0], n_channels, h * p, h * p))
         return imgs
 
     def random_masking(self, x, mask_ratio, noise=None):
@@ -190,12 +208,22 @@ class MaskedAutoencoderViT(nn.Module):
         x = self.decoder_norm(x)
 
         # predictor projection
-        x = self.decoder_pred(x)
-
-        # remove cls token
-        x = x[:, 1:, :]
-
-        return x
+        if not self.quantile:
+            x = self.decoder_pred(x)
+            x = x[:, 1:, :]  # remove cls token
+            return x
+        else:
+            # first calculate the 50% quantile value
+            x_mid = self.decoder_pred(x)[:, 1:, :]  # [batch, ]
+            
+            # then calculate the other quantile values
+            x_quantile_list = []
+            for i in range(self.quantile_head_num-1):
+                x_quantile = self.decoder_pred_quantile_list[i](x)[:, 1:, :]
+                x_quantile_list.append(x_quantile)
+            
+            # this will generate 9 groups of data
+            return x_mid, x_quantile_list
 
     def forward_loss(self, imgs, pred, mask):
         """
