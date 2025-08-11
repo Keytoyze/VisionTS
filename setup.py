@@ -25,5 +25,6 @@ setup(
         "numpy",
         "timm",
         "pandas",
+        "huggingface_hub",
     ],
 )
