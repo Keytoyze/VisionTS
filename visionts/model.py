@@ -168,7 +168,7 @@ VISIONTSPP_REPO_ID = "Lefei/VisionTSpp"
 class VisionTSpp(nn.Module):
     def __init__(self, arch='mae_base', finetune_type='ln', ckpt_dir='./ckpt/', ckpt_path=None, load_ckpt=True,
                  quantile=True, clip_input=0, complete_no_clip=False, color=True, quantile_head_num=9):
-        super(VisionTS, self).__init__()
+        super(VisionTSpp, self).__init__()
 
         if arch not in MAE_ARCH:
             raise ValueError(f"Unknown arch: {arch}. Should be in {list(MAE_ARCH.keys())}")
