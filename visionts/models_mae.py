@@ -65,6 +65,7 @@ class MaskedAutoencoderViT(nn.Module):
 
         # prediction head
         self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size**2 * in_chans, bias=True)  # decoder to patch
+
         if self.quantile:
             # adds quantile outputs:
             # we need 9 outputs in total, corresponding to 10%, 20%, ..., 90%
@@ -212,6 +213,7 @@ class MaskedAutoencoderViT(nn.Module):
             x = self.decoder_pred(x)
             x = x[:, 1:, :]  # remove cls token
             return x
+        
         else:
             # first calculate the 50% quantile value
             x_mid = self.decoder_pred(x)[:, 1:, :]  # [batch, ]

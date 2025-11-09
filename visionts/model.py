@@ -162,6 +162,7 @@ class VisionTS(nn.Module):
         return y
 
 
+
 # huggingface repository name:
 VISIONTSPP_REPO_ID = "Lefei/VisionTSpp"
 
@@ -181,22 +182,28 @@ class VisionTSpp(nn.Module):
 
         if load_ckpt:
             if ckpt_path is None:
-                ckpt_path = os.path.join(ckpt_dir, "visiontspp_model.ckpt")
+                ckpt_path = os.path.join(ckpt_dir, "visiontspp_base.ckpt")
             
             if not os.path.isfile(ckpt_path):
                 # local directory to save the model
                 local_dir = Path(ckpt_path).parent
 
                 # Download model from HuggingFace
-                snapshot_download(
-                    repo_id=VISIONTSPP_REPO_ID,
-                    local_dir=local_dir,
-                    local_dir_use_symlinks=False
-                )
+                try:
+                    snapshot_download(
+                        repo_id=VISIONTSPP_REPO_ID,
+                        local_dir=local_dir,
+                        local_dir_use_symlinks=False
+                    )
+                except Exception as e:
+                    print(f"Failed to download model from HuggingFace. Please check the internet connection and try again.")
+                    print(f"Error: {e}")
+                    raise
             
             try:
                 print(f"Load {ckpt_path}")
                 checkpoint = torch.load(ckpt_path, map_location='cpu')
+
                 # quantile model:
                 if not quantile:
                     for k in list(checkpoint['model'].keys()):
