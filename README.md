@@ -6,7 +6,8 @@
 
 _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
 
-[![Paper](https://img.shields.io/badge/paper-2408.17253-red)](https://arxiv.org/abs/2408.17253)
+[![VisionTS](https://img.shields.io/badge/VisionTS-2408.17253-red)](https://arxiv.org/abs/2408.17253)
+[![VisionTS++](https://img.shields.io/badge/VisionTS++-2508.04379-red)](https://arxiv.org/abs/2508.04379)
 [![PyPI - Version](https://img.shields.io/pypi/v/visionts)](#-quick-start)
 [![AI horizon forecast](https://img.shields.io/badge/AI_horizon_forecast-black?logo=data%3Aimage%2Fjpeg%3Bbase64%2C%2F9j%2F4AAQSkZJRgABAQAAAQABAAD%2F2wCEAAQEBAQEBAQEBAQGBgUGBggHBwcHCAwJCQkJCQwTDA4MDA4MExEUEA8QFBEeFxUVFx4iHRsdIiolJSo0MjRERFwBBAQEBAQEBAQEBAYGBQYGCAcHBwcIDAkJCQkJDBMMDgwMDgwTERQQDxAUER4XFRUXHiIdGx0iKiUlKjQyNEREXP%2FCABEIADAAMAMBIgACEQEDEQH%2FxAAcAAABBAMBAAAAAAAAAAAAAAAHAAQFBgECCAP%2F2gAIAQEAAAAA4by52aKaakJyNMdZgMxvee73dCJ5%2Bdhg%2BLJ6J2IY7r6SS%2F%2FEABkBAAIDAQAAAAAAAAAAAAAAAAMGAQIEBf%2FaAAgBAhAAAAB33c9jJRYk3%2F%2FEABcBAAMBAAAAAAAAAAAAAAAAAAQFBwD%2F2gAIAQMQAAAATKm88APoWH%2F%2FxAAxEAABAwIEBQEFCQAAAAAAAAABAgMEAAUGERITByExUWEiFEFCUqIjM0NTYnFykZL%2F2gAIAQEAAT8A2vIraqLBXJdS0jmo%2B6pluehull4aVDqDW15FbRp%2B3ux0JcW2dJ5Z0Up%2BWuH0RsS7nd1oBRbYa5Az%2BckIR9Sgax2wJsOyYi0ZKmNuMvkfnsEA%2FSQa0I7GtCOxq28MYF0w6i0XF4x7zdmi5b9ZCUNqTza3Aef2x9Iy6dan4RkWqS9BuKFsSWjkpCyP7HcHuORrDWC02jAL8ua6lp29zUbQcUEExogOfX3KUr6aewUi%2FwCBr5boD6HZVuebuLKW1BatsDbeAA%2FcE%2Fxo2EglBfGoHIjlnTXC2%2BRrMm9vNJ0LaD4aK07oZJ0h0oz1BBPRXSm%2BNl6dmh5y%2BXVAKwfvTo%2FyFVd8W4uvU%2B3XbDlykyoVyKNKGnFOIYkdHGyPgyPNPisW8ULi3PTAi4jc24TLcYuNyigOrQPWv0n4lVhHipcmb5CEu%2FuuR3FbTmuTuBKXBp15EnmnrVvxSbriSTAvFxnQJUJx1U9DKQthaGAVLWkkjbJA8jtVx4vXl%2B5vzI7iGmiopS0G0FIa6BBBHMZVun56t2J7nbY78eLOeabeTodS2spC09ld6cmuOKKtymZy21JUHOhFT%2BIcqVZ%2FYk7aZDjSGX5KU5POtN5FKFKozFq%2FENbvmt39Vb3mt3zW7W95r%2F%2FEACURAAEEAQMDBQEAAAAAAAAAAAECAxESAAQFIRQxUSJCQ3GBof%2FaAAgBAgEBPwBWjoaqEHBtjR0Re%2BSf4M6UYlC3nrOpZcBSfefSR%2BZTVdEtIaZsSVBNzMTNe3jEadRWlLWlbEJsoqWY57AEY3uRaMoXBwbkoG1%2BfvHd4cdiTEeOM%2F%2FEACQRAAIBBAEDBQEAAAAAAAAAAAECAwAEERIFEyEjFDFRYnGR%2F9oACAEDAQE%2FAFuA42U5FNyzjlEtNfGRjb7kZxXWNRXfIcYHWZZAHcsNgAP7k009016L7z9PcPnUdiBjNPz19Musaup2HbAJZSPepbGOZdZUDD4IBr0SFdNFxVtw9taKywx4DEk%2Fpr%2F%2F2Q%3D%3D)](https://aihorizonforecast.substack.com/p/visionts-building-high-performance)
 [![机器之心](https://img.shields.io/badge/%E6%9C%BA%E5%99%A8%E4%B9%8B%E5%BF%83-black?logo=wechat&logoColor=white)](https://mp.weixin.qq.com/s/vTPkbu5ANYBGO4KYKZfAyg)
@@ -20,10 +21,13 @@ _Visual Masked Autoencoders Are Free-Lunch Zero-Shot Time Series Forecasters_
     | 🔗&nbsp;<a href="#-citation">Citation</a>
 </p>
 
+## 🎉 What's New
 
-- 🔥 Our paper is accepted by ICML 2025!
+- 🔥 Aug 2025: We released [VisionTS++](https://arxiv.org/abs/2508.04379), a SOTA time series foundation model by continual pretraining visual MAE on large-scale time series data, supporting multi-channel forecasting and probablistic forecasting!
 
-- 🔥 VisionTS achieved the **#1** rank 🏆 for zero-shot point forecasting (MASE) on [GIFT-EVAL](https://huggingface.co/spaces/Salesforce/GIFT-Eval) (as of Nov 2024, surpassing Moirai, TimesFM, chronos, etc) — **without any time series training**!
+- May 2025: Our paper is accepted by ICML 2025!
+
+- Nov 2024: VisionTS achieved the **#1** rank 🏆 for zero-shot point forecasting (MASE) on [GIFT-EVAL](https://huggingface.co/spaces/Salesforce/GIFT-Eval) (as of Nov 2024, surpassing Moirai, TimesFM, chronos, etc) — **without any time series training**!
 
 ## 🔍 About
 
@@ -138,5 +142,4 @@ bash scripts/vision_ts_fullshot/$SOME_DATASET.sh
         <img src="https://api.star-history.com/svg?repos=Keytoyze/VisionTS&type=Timeline" style="width: 70%;" />
     </a>
 </div>
-
 
